@@ -190,12 +190,12 @@ class Query(graphene.ObjectType):
 
     @permission_required("drivers.read")
     def resolve_drivers(self, info, filter=None):
-        f = filter or DriverFilter()
+        f = filter
         return list(list_drivers(
-            status=f.status,
-            depot_id=f.depot_id,
-            flex_enrolled=f.flex_enrolled,
-            search=f.search,
+            status=getattr(f, "status", None) if f else None,
+            depot_id=getattr(f, "depot_id", None) if f else None,
+            flex_enrolled=getattr(f, "flex_enrolled", None) if f else None,
+            search=getattr(f, "search", None) if f else None,
         ))
 
     @permission_required("drivers.read")
