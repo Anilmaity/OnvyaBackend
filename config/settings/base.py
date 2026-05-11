@@ -43,7 +43,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
-    # AgencyContextMiddleware added in Task 7
+    "apps.common.middleware.AgencyContextMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
