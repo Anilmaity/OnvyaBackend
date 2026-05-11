@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     # local — uncomment as apps come online in later tasks
     "apps.common",
     "apps.agencies",
-    # "apps.accounts",
+    "apps.accounts",
     # "apps.audit",
     # "apps.drivers",
     # "apps.onboarding",
@@ -74,8 +74,12 @@ DATABASES = {
     )
 }
 
-# AUTH_USER_MODEL set to apps.accounts.AgencyUser once Task 4 lands.
-# Leaving default for now so `python manage.py check` passes against an empty INSTALLED_APPS local list.
+AUTH_USER_MODEL = "accounts.AgencyUser"
+
+# Email uniqueness is enforced per-agency via a composite UniqueConstraint on
+# (agency, email); the standard auth.E003 check (globally-unique USERNAME_FIELD)
+# does not apply to our multi-tenant user model.
+SILENCED_SYSTEM_CHECKS = ["auth.E003"]
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
