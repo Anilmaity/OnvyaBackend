@@ -1,0 +1,6 @@
+-r base.txt
+pytest==8.1.1
+pytest-django==4.8.0
+factory-boy==3.3.0
+pytest-factoryboy==2.7.0
+ipython==8.22.0
