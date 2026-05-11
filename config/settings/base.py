@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     "apps.agencies",
     "apps.accounts",
     "apps.audit",
-    # "apps.drivers",
+    "apps.drivers",
     # "apps.onboarding",
 ]
 
