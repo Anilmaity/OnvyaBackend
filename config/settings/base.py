@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.audit",
     "apps.drivers",
-    # "apps.onboarding",
+    "apps.onboarding",
 ]
 
 MIDDLEWARE = [
