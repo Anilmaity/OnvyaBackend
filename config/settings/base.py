@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     "auditlog",
     # local — uncomment as apps come online in later tasks
     "apps.common",
-    # "apps.agencies",
+    "apps.agencies",
     # "apps.accounts",
     # "apps.audit",
     # "apps.drivers",
