@@ -126,3 +126,29 @@ def test_cannot_self_deactivate(ctx):
     _, actor, _, req = ctx
     q = f"""mutation {{ deactivateAgencyUser(userId: "{actor.id}") {{ __typename }} }}"""
     assert _run(q, req)["data"]["deactivateAgencyUser"]["__typename"] == "ValidationError"
+
+
+def test_me_driver_profile_returns_driver(ctx):
+    agency, actor, _, _ = ctx
+    from apps.drivers.models import Driver
+    Driver.objects.create(
+        agency=agency, user=actor,
+        first_name="Drive", last_name="R", email="actor@a.test",
+        status=Driver.Status.ACTIVE,
+    )
+    actor.refresh_from_db()
+    q = """query { me { driverProfile { firstName lastName status } } }"""
+    class Req: pass
+    req = Req(); req.user = actor; req.current_agency = agency
+    r = _run(q, req)
+    assert r["data"]["me"]["driverProfile"]["firstName"] == "Drive"
+    assert r["data"]["me"]["driverProfile"]["status"] == "ACTIVE"
+
+
+def test_me_driver_profile_returns_null_when_absent(ctx):
+    _, actor, _, _ = ctx
+    q = """query { me { driverProfile { firstName } } }"""
+    class Req: pass
+    req = Req(); req.user = actor; req.current_agency = None
+    r = _run(q, req)
+    assert r["data"]["me"]["driverProfile"] is None

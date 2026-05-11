@@ -27,6 +27,7 @@ class PermissionType(DjangoObjectType):
 class AgencyUserType(DjangoObjectType):
     permissions = graphene.List(graphene.NonNull(graphene.String), required=True)
     roles = graphene.List(graphene.NonNull(RoleType), required=True)
+    driver_profile = graphene.Field("apps.drivers.schema.DriverType")
 
     class Meta:
         model = AgencyUser
@@ -41,6 +42,12 @@ class AgencyUserType(DjangoObjectType):
 
     def resolve_roles(self, info):
         return [ur.role for ur in self.user_roles.select_related("role").all()]
+
+    def resolve_driver_profile(self, info):
+        try:
+            return self.driver_profile
+        except Exception:
+            return None
 
 
 class AuthPayload(graphene.ObjectType):
