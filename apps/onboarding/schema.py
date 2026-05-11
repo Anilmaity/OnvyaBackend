@@ -10,13 +10,6 @@ from apps.onboarding.services import ApplicationService, IllegalTransition
 from apps.onboarding.selectors import list_applications
 
 
-class ApplicationType(DjangoObjectType):
-    class Meta:
-        model = Application
-        fields = ("id", "driver", "state", "submitted_at", "decided_at",
-                  "decided_by", "rejection_reason", "created_at", "updated_at")
-
-
 class StepType(DjangoObjectType):
     class Meta:
         model = Step
@@ -27,6 +20,22 @@ class ApplicationDocumentType(DjangoObjectType):
     class Meta:
         model = ApplicationDocument
         fields = ("id", "kind", "file", "ocr_payload", "uploaded_at", "application")
+
+
+class ApplicationType(DjangoObjectType):
+    steps = graphene.List(graphene.NonNull(StepType), required=True)
+    documents = graphene.List(graphene.NonNull(ApplicationDocumentType), required=True)
+
+    class Meta:
+        model = Application
+        fields = ("id", "driver", "state", "submitted_at", "decided_at",
+                  "decided_by", "rejection_reason", "created_at", "updated_at")
+
+    def resolve_steps(self, info):
+        return list(self.steps.all().order_by("created_at"))
+
+    def resolve_documents(self, info):
+        return list(self.documents.all().order_by("-uploaded_at"))
 
 
 class ApplicationFilter(graphene.InputObjectType):

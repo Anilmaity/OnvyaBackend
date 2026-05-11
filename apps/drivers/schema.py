@@ -11,18 +11,23 @@ from apps.common.graphql_types import (
 from apps.common.permissions import permission_required
 
 
+class DriverNoteType(DjangoObjectType):
+    class Meta:
+        model = DriverNote
+        fields = ("id", "body", "author", "driver", "created_at")
+
+
 class DriverType(DjangoObjectType):
+    notes = graphene.List(graphene.NonNull(DriverNoteType), required=True)
+
     class Meta:
         model = Driver
         fields = ("id", "first_name", "last_name", "email", "phone", "status",
                   "licence_type", "depot", "flex_enrolled", "joined_at",
                   "suspension_reason", "offboard_reason", "created_at", "updated_at")
 
-
-class DriverNoteType(DjangoObjectType):
-    class Meta:
-        model = DriverNote
-        fields = ("id", "body", "author", "driver", "created_at")
+    def resolve_notes(self, info):
+        return list(self.notes.all().order_by("-created_at"))
 
 
 class DriverFilter(graphene.InputObjectType):
