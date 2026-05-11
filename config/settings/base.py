@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "auditlog",
     # local — uncomment as apps come online in later tasks
-    # "apps.common",
+    "apps.common",
     # "apps.agencies",
     # "apps.accounts",
     # "apps.audit",
