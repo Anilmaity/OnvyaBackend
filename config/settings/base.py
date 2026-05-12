@@ -31,7 +31,16 @@ INSTALLED_APPS = [
     "apps.audit",
     "apps.drivers",
     "apps.onboarding",
+    "apps.scheduling",
+    "apps.documents",
+    "apps.training",
+    "apps.invoicing",
 ]
+
+# Wave 1+2 financial defaults
+DEFAULT_HOURLY_RATE = "15.00"
+INVOICE_VAT_RATE = "0.20"
+INVOICE_DUE_DAYS = 14
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
