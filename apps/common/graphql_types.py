@@ -8,7 +8,7 @@ class FieldError(graphene.ObjectType):
 
 class Success(graphene.ObjectType):
     id = graphene.ID()
-    message = graphene.String()
+    message = graphene.String(required=True)
 
 
 class ValidationError(graphene.ObjectType):
