@@ -31,6 +31,7 @@ class AgencyUser(AbstractBaseUser, PermissionsMixin):
             models.UniqueConstraint(fields=["agency", "email"], name="user_unique_email_per_agency"),
         ]
         indexes = [models.Index(fields=["agency", "email"])]
+        default_manager_name = "all_objects"
 
     def __str__(self):
         return f"{self.email} ({self.agency_id})"
