@@ -14,5 +14,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  web:
+    build: .
+    image: onvya-backend:latest
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    command: python manage.py runserver 0.0.0.0:8000
+
 volumes:
   onvya_pg:
