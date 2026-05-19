@@ -8,6 +8,7 @@ from apps.scheduling.schema import Query as SchedulingQuery, Mutation as Schedul
 from apps.documents.schema import Query as DocumentsQuery, Mutation as DocumentsMutation
 from apps.training.schema import Query as TrainingQuery, Mutation as TrainingMutation
 from apps.invoicing.schema import Query as InvoicingQuery, Mutation as InvoicingMutation
+from apps.payments.schema import Query as PaymentsQuery, Mutation as PaymentsMutation
 
 
 class Query(
@@ -19,6 +20,7 @@ class Query(
     DocumentsQuery,
     TrainingQuery,
     InvoicingQuery,
+    PaymentsQuery,
     graphene.ObjectType,
 ):
     pass
@@ -32,6 +34,7 @@ class Mutation(
     DocumentsMutation,
     TrainingMutation,
     InvoicingMutation,
+    PaymentsMutation,
     graphene.ObjectType,
 ):
     pass

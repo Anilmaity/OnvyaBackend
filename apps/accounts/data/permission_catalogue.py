@@ -37,6 +37,12 @@ PERMISSIONS = [
     # training
     ("training.read", "Read training courses and completions"),
     ("training.write", "Upsert courses / record completions"),
+    # payments (Modulr-backed; Onvya never custodies funds)
+    ("payments.read", "Read pay runs and payment status"),
+    ("payments.calculate", "Generate draft pay runs from issued invoices"),
+    ("payments.approve", "Approve or cancel a draft pay run"),
+    ("payments.submit", "Submit an approved pay run to the payment provider"),
+    ("payments.configure", "Configure the agency's payment account (Modulr details)"),
 ]
 
 # role_name -> set of permission codes
@@ -49,6 +55,7 @@ ROLE_MATRIX = {
         "scheduling.read", "scheduling.create", "scheduling.update", "scheduling.approve_adjustment",
         "documents.read",
         "invoicing.read", "invoicing.create", "invoicing.update",
+        "payments.read",
         "training.read",
     },
     "Compliance Officer": {
@@ -62,10 +69,12 @@ ROLE_MATRIX = {
     },
     "Finance Admin": {
         "agencies.read",
-        "drivers.read",
+        "drivers.read", "drivers.update",
         "audit.read",
         "scheduling.read",
         "invoicing.read", "invoicing.create", "invoicing.update",
+        "payments.read", "payments.calculate", "payments.approve",
+        "payments.submit", "payments.configure",
     },
     "Recruiter": {
         "agencies.read",

@@ -35,12 +35,28 @@ INSTALLED_APPS = [
     "apps.documents",
     "apps.training",
     "apps.invoicing",
+    "apps.payments",
 ]
 
 # Wave 1+2 financial defaults
 DEFAULT_HOURLY_RATE = "15.00"
 INVOICE_VAT_RATE = "0.20"
 INVOICE_DUE_DAYS = 14
+
+# --- Modulr payments ---------------------------------------------------------
+# Onvya never custodies funds. Each agency has its own Modulr e-money account;
+# these credentials are the partner-level keys Onvya uses to call the Modulr API
+# on the agency's behalf. Stub mode returns deterministic fakes for dev/test.
+MODULR_USE_STUB = os.environ.get("MODULR_USE_STUB", "True") == "True"
+MODULR_BASE_URL = os.environ.get(
+    "MODULR_BASE_URL", "https://api-sandbox.modulrfinance.com/api-sandbox",
+)
+MODULR_API_KEY = os.environ.get("MODULR_API_KEY", "")
+MODULR_HMAC_SECRET = os.environ.get("MODULR_HMAC_SECRET", "")
+MODULR_WEBHOOK_SECRET = os.environ.get("MODULR_WEBHOOK_SECRET", "")
+PAYMENTS_REQUIRE_FOUR_EYES = (
+    os.environ.get("PAYMENTS_REQUIRE_FOUR_EYES", "True") == "True"
+)
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
