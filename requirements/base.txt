@@ -11,3 +11,4 @@ python-dotenv==1.0.1
 argon2-cffi==23.1.0
 Pillow==10.2.0
 dj-database-url==2.1.0
+requests==2.31.0

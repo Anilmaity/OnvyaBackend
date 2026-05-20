@@ -29,11 +29,8 @@ ENV PYTHONUNBUFFERED=1
 
 RUN mkdir /app
 WORKDIR /app
-# RUN pip install TA-Lib
-RUN pip install django_graphql_auth
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
-RUN pip install requests==2.25.0
+COPY requirements/ requirements/
+RUN pip install -r requirements/dev.txt
 
 COPY . .
 EXPOSE 8000
