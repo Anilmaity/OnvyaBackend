@@ -225,6 +225,7 @@ class Query(graphene.ObjectType):
         graphene.NonNull(ShiftType), filter=ShiftFilter(), required=True,
     )
     shift = graphene.Field(ShiftType, id=graphene.ID(required=True))
+    my_shifts = graphene.List(graphene.NonNull(ShiftType), required=True)
     time_adjustments = graphene.List(
         graphene.NonNull(TimeAdjustmentType), filter=TimeAdjustmentFilter(), required=True,
     )
@@ -240,6 +241,15 @@ class Query(graphene.ObjectType):
             start_after=getattr(f, "start_after", None) if f else None,
             start_before=getattr(f, "start_before", None) if f else None,
         ))
+
+    def resolve_my_shifts(self, info):
+        user = getattr(info.context, "user", None)
+        if not user or not getattr(user, "is_authenticated", False):
+            return []
+        driver = getattr(user, "driver_profile", None)
+        if driver is None:
+            return []
+        return list(Shift.objects.filter(driver=driver).order_by("-start"))
 
     @permission_required("scheduling.read")
     def resolve_shift(self, info, id):

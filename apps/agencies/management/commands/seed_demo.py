@@ -64,10 +64,10 @@ class Command(BaseCommand):
             self._seed_driver_notes(agency)
             active_drivers = [d for d in drivers if d.status == Driver.Status.ACTIVE]
             self._seed_shifts(agency, active_drivers)
+            self._seed_invoicing(agency, active_drivers)
             self._seed_adjustments(agency)
             self._seed_documents(agency, drivers)
             self._seed_training(agency, drivers)
-            self._seed_invoicing(agency, active_drivers)
 
         self.stdout.write(self.style.SUCCESS("seed_demo complete"))
 
@@ -83,8 +83,22 @@ class Command(BaseCommand):
 
     # --------------------------------------------------------------- drivers
     def _seed_drivers(self, agency, depots):
+        from apps.accounts.models import Role, UserRole
         drivers = []
+        driver_role = Role.objects.filter(agency=agency, name="Driver").first()
         for first, last, email, status, depot_name, flex in DEMO_DRIVERS:
+            # If this driver has a matching AgencyUser, link them and create a login.
+            # First active driver (Sarah Chen) gets a known password for mobile testing.
+            user = AgencyUser.all_objects.filter(agency=agency, email=email).first()
+            if user is None and status == Driver.Status.ACTIVE:
+                user = AgencyUser(
+                    agency=agency, email=email, first_name=first, last_name=last,
+                    is_active=True,
+                )
+                user.set_password("demo1234")
+                user.save()
+                if driver_role is not None:
+                    UserRole.objects.get_or_create(user=user, role=driver_role)
             driver, _ = Driver.objects.update_or_create(
                 agency=agency, email=email,
                 defaults={
@@ -95,6 +109,7 @@ class Command(BaseCommand):
                     "phone": "+44 20 7000 0000",
                     "joined_at": timezone.now() - timedelta(days=120),
                     "licence_type": "B",
+                    "user": user,
                 },
             )
             drivers.append(driver)
@@ -178,10 +193,17 @@ class Command(BaseCommand):
     def _seed_adjustments(self, agency):
         from apps.scheduling.models import Shift, TimeAdjustment
         from apps.scheduling.services import TimeAdjustmentService
+        from apps.invoicing.models import Invoice, InvoiceLineItem
 
         admin = AgencyUser.objects.filter(agency=agency, email="admin@demo.test").first()
+        invoiced_shift_ids = set(
+            InvoiceLineItem.objects.exclude(invoice__status=Invoice.Status.VOID)
+            .values_list("shift_id", flat=True)
+        )
         completed = list(
-            Shift.objects.filter(agency=agency, status=Shift.Status.COMPLETED).order_by("-actual_end")[:8]
+            Shift.objects.filter(agency=agency, status=Shift.Status.COMPLETED)
+            .exclude(id__in=invoiced_shift_ids)
+            .order_by("-actual_end")[:8]
         )
         if not completed:
             return

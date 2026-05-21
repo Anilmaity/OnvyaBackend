@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from apps.common.graphql_types import (
     FieldError,
     MutationResult,
+    PermissionDenied,
     Success,
     ValidationError,
 )
@@ -193,11 +194,18 @@ class UpsertDriverBankAccount(graphene.Mutation):
 
     Output = MutationResult
 
-    @permission_required("drivers.update")
     def mutate(self, info, input):
+        user = getattr(info.context, "user", None)
         driver = Driver.objects.filter(id=input.driver_id).first()
         if driver is None:
             return _validation("driver_id", "Driver not found")
+        # Allow self-service: a driver can update their own bank account.
+        # Otherwise require the admin-side drivers.update permission.
+        is_self = user is not None and getattr(user, "driver_profile", None) is not None and str(user.driver_profile.id) == str(driver.id)
+        if not is_self:
+            from apps.common.permissions import has_permission
+            if not has_permission(user, "drivers.update"):
+                return PermissionDenied(code="permission_denied", message="drivers.update required")
         svc = DriverBankAccountService()
         existing = DriverBankAccount.objects.filter(driver=driver, is_primary=True).first()
         if existing:

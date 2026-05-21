@@ -123,6 +123,16 @@ class Query(graphene.ObjectType):
         graphene.NonNull(InvoiceType), filter=InvoiceFilter(), required=True,
     )
     invoice = graphene.Field(InvoiceType, id=graphene.ID(required=True))
+    my_invoices = graphene.List(graphene.NonNull(InvoiceType), required=True)
+
+    def resolve_my_invoices(self, info):
+        user = getattr(info.context, "user", None)
+        if not user or not getattr(user, "is_authenticated", False):
+            return []
+        driver = getattr(user, "driver_profile", None)
+        if driver is None:
+            return []
+        return list(Invoice.objects.filter(driver=driver).order_by("-period_start"))
 
     @permission_required("invoicing.read")
     def resolve_invoices(self, info, filter=None):

@@ -166,8 +166,9 @@ class Query(graphene.ObjectType):
 
     @permission_required("applications.read")
     def resolve_applications(self, info, filter=None):
-        f = filter or ApplicationFilter()
-        return list(list_applications(state=f.state, search=f.search))
+        state = filter.get("state") if filter else None
+        search = filter.get("search") if filter else None
+        return list(list_applications(state=state, search=search))
 
     @permission_required("applications.read")
     def resolve_application(self, info, id):

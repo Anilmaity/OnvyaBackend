@@ -125,10 +125,23 @@ class Query(graphene.ObjectType):
         graphene.NonNull(CompletionType), filter=CompletionFilter(), required=True,
     )
     driver_training = graphene.Field(DriverTrainingType, driver_id=graphene.ID(required=True))
+    my_training = graphene.Field(DriverTrainingType)
 
     @permission_required("training.read")
     def resolve_courses(self, info):
         return list(list_courses())
+
+    def resolve_my_training(self, info):
+        user = getattr(info.context, "user", None)
+        if not user or not getattr(user, "is_authenticated", False):
+            return None
+        driver = getattr(user, "driver_profile", None)
+        if driver is None:
+            return None
+        return DriverTrainingType(
+            completed=list(Completion.objects.filter(driver=driver).select_related("course")),
+            missing=list(missing_required_courses(driver)),
+        )
 
     @permission_required("training.read")
     def resolve_completions(self, info, filter=None):
