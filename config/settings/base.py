@@ -149,6 +149,12 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = [o for o in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if o]
+# Auth is JWT bearer tokens (Authorization header), so cross-site cookies are
+# not used; keep credentials off unless an env var explicitly enables them.
+CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS", "False") == "True"
+# Django 4+ requires scheme-qualified origins (e.g. https://example.com) for
+# CSRF on cross-origin POSTs and the admin login over HTTPS.
+CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "memory://")
 CELERY_TASK_ALWAYS_EAGER = True
