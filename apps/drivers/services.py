@@ -1,3 +1,8 @@
+import random
+
+from django.db import transaction
+
+from apps.common.context import get_current_agency
 from apps.common.services import AgencyScopedService
 from apps.drivers.models import Driver, DriverNote
 
@@ -7,19 +12,48 @@ class DriverService(AgencyScopedService):
 
     def create(self, *, first_name, last_name, email, phone="", ni_number="", date_of_birth=None,
                licence_type="", depot=None, flex_enrolled=False):
-        driver = Driver(
-            first_name=first_name,
-            last_name=last_name,
-            email=email.lower().strip(),
-            phone=phone,
-            ni_number=ni_number,
-            date_of_birth=date_of_birth,
-            licence_type=licence_type or "",
-            depot=depot,
-            flex_enrolled=flex_enrolled,
-            status=Driver.Status.PENDING,
-        )
-        return self.save(driver)
+        agency = get_current_agency()
+        email = email.lower().strip()
+        with transaction.atomic():
+            driver = Driver(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                ni_number=ni_number,
+                date_of_birth=date_of_birth,
+                licence_type=licence_type or "",
+                depot=depot,
+                flex_enrolled=flex_enrolled,
+                status=Driver.Status.PENDING,
+                registration_code=self._generate_code(),
+            )
+            driver.user = self._ensure_login(agency, email, first_name, last_name)
+            self.save(driver)
+        return driver
+
+    def _generate_code(self):
+        for _ in range(10):
+            code = f"{random.randint(0, 999999):06d}"
+            if not Driver.objects.filter(registration_code=code).exists():
+                return code
+        return f"{random.randint(0, 999999):06d}"
+
+    def _ensure_login(self, agency, email, first_name, last_name):
+        from apps.accounts.models import AgencyUser, Role, UserRole
+        user = AgencyUser.all_objects.filter(agency=agency, email=email).first()
+        if user is None:
+            user = AgencyUser(
+                agency=agency, email=email,
+                first_name=first_name, last_name=last_name,
+                is_active=False,
+            )
+            user.set_unusable_password()
+            user.save()
+        driver_role = Role.objects.filter(agency=agency, name="Driver").first()
+        if driver_role is not None:
+            UserRole.objects.get_or_create(user=user, role=driver_role)
+        return user
 
     def update(self, driver, **fields):
         for k, v in fields.items():
