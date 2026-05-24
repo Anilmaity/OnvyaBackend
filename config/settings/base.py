@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.audit",
     "apps.drivers",
+    "apps.vehicles",
     "apps.onboarding",
     "apps.scheduling",
     "apps.documents",
