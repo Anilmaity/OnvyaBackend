@@ -88,3 +88,16 @@ def test_driver_uploads_to_own_application(driver_ctx):
         context=req, variables={"f": f},
     )
     assert r["data"]["uploadApplicationDocument"]["__typename"] == "Success"
+
+
+def test_submit_my_application_happy(driver_ctx):
+    a, user, driver, req = driver_ctx
+    from apps.onboarding.services import ApplicationService
+    from apps.onboarding.models import Application
+    app = ApplicationService().start(driver)
+    f = SimpleUploadedFile("l.pdf", b"x", content_type="application/pdf")
+    ApplicationService().upload_document(app, "LICENCE", f)
+    r = _run("mutation { submitMyApplication { __typename ... on Success { message } } }", req)
+    assert r["data"]["submitMyApplication"]["__typename"] == "Success"
+    app.refresh_from_db()
+    assert app.state == Application.State.PENDING_REVIEW

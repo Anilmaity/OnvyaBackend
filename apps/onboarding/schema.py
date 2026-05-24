@@ -276,6 +276,23 @@ class SaveMyBackgroundCheck(graphene.Mutation):
         return Success(id=str(driver.id), message="background_saved")
 
 
+class SubmitMyApplication(graphene.Mutation):
+    Output = MutationResult
+
+    def mutate(self, info):
+        driver = _self_driver(info)
+        if driver is None:
+            return PermissionDenied(code="no_driver", message="No driver profile for current user")
+        app = Application.objects.filter(driver=driver).first()
+        if app is None:
+            return _validation("application", "No application to submit")
+        try:
+            ApplicationService().submit_for_review(app)
+        except IllegalTransition as e:
+            return _validation("state", str(e))
+        return Success(id=str(app.id), message="submitted")
+
+
 class Query(graphene.ObjectType):
     applications = graphene.List(graphene.NonNull(ApplicationType), filter=ApplicationFilter(), required=True)
     application = graphene.Field(ApplicationType, id=graphene.ID(required=True))
@@ -312,3 +329,4 @@ class Mutation(graphene.ObjectType):
     save_my_personal_details = SaveMyPersonalDetails.Field()
     save_my_vehicle = SaveMyVehicle.Field()
     save_my_background_check = SaveMyBackgroundCheck.Field()
+    submit_my_application = SubmitMyApplication.Field()
