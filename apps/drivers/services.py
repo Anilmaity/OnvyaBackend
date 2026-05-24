@@ -30,6 +30,8 @@ class DriverService(AgencyScopedService):
             )
             driver.user = self._ensure_login(agency, email, first_name, last_name)
             self.save(driver)
+        from apps.drivers.tasks import send_driver_registration_email
+        send_driver_registration_email.delay(str(driver.id))
         return driver
 
     def _generate_code(self):

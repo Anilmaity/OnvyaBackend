@@ -41,3 +41,13 @@ def test_create_links_existing_user_not_duplicate(agency_ctx):
     d = DriverService().create(first_name="A", last_name="B", email="AB@a.test")
     assert d.user_id == existing.id
     assert AgencyUser.all_objects.filter(agency=agency_ctx, email="ab@a.test").count() == 1
+
+
+def test_create_sends_email_with_code(agency_ctx):
+    from django.core import mail
+    mail.outbox.clear()
+    d = DriverService().create(first_name="A", last_name="B", email="ab@a.test")
+    assert len(mail.outbox) == 1
+    msg = mail.outbox[0]
+    assert msg.to == ["ab@a.test"]
+    assert d.registration_code in msg.body
