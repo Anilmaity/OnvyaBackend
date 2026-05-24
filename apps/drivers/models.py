@@ -28,6 +28,8 @@ class Driver(AgencyScopedModel):
     phone = models.CharField(max_length=32, blank=True, default="")
     ni_number = models.CharField(max_length=32, blank=True, default="")  # TODO Phase 5: encrypt at rest
     date_of_birth = models.DateField(null=True, blank=True)
+    dbs_consent = models.BooleanField(default=False)
+    dbs_consent_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
     licence_type = models.CharField(max_length=8, choices=LicenceType.choices, blank=True, default="")
     depot = models.ForeignKey("agencies.Depot", on_delete=models.SET_NULL, null=True, blank=True, related_name="drivers")
