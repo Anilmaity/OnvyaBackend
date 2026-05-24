@@ -101,3 +101,17 @@ def test_submit_my_application_happy(driver_ctx):
     assert r["data"]["submitMyApplication"]["__typename"] == "Success"
     app.refresh_from_db()
     assert app.state == Application.State.PENDING_REVIEW
+
+
+def test_driver_cannot_upload_to_another_drivers_application(driver_ctx):
+    a, user, driver, req = driver_ctx
+    from apps.onboarding.services import ApplicationService
+    other_user = AgencyUserFactory(agency=a, email="other@a.test", password="x")
+    other_driver = DriverFactory(agency=a, user=other_user)
+    other_app = ApplicationService().start(other_driver)
+    f = SimpleUploadedFile("l.pdf", b"x", content_type="application/pdf")
+    r = Client(schema).execute(
+        'mutation($f: Upload!) { uploadApplicationDocument(applicationId: "%s", kind: "LICENCE", file: $f) { __typename } }' % other_app.id,
+        context=req, variables={"f": f},
+    )
+    assert r["data"]["uploadApplicationDocument"]["__typename"] == "PermissionDenied"
