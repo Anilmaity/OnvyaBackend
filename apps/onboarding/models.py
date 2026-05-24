@@ -58,6 +58,8 @@ class ApplicationDocument(AgencyScopedModel):
         LICENCE = "LICENCE"
         PASSPORT = "PASSPORT"
         RTW_EVIDENCE = "RTW_EVIDENCE"
+        PHV_LICENCE = "PHV_LICENCE"
+        INSURANCE = "INSURANCE"
 
     application = models.ForeignKey(Application, on_delete=models.CASCADE, related_name="documents")
     kind = models.CharField(max_length=32, choices=Kind.choices)
