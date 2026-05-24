@@ -50,3 +50,12 @@ def test_save_my_personal_details(driver_ctx):
     assert r["data"]["saveMyPersonalDetails"]["__typename"] == "Success"
     driver.refresh_from_db()
     assert driver.first_name == "Jane" and driver.phone == "7123456789"
+
+
+def test_save_my_vehicle_upsert(driver_ctx):
+    a, user, driver, req = driver_ctx
+    _run("mutation { startMyApplication { __typename } }", req)
+    q = 'mutation { saveMyVehicle(registration:"LV71 ABC", make:"Tesla", model:"Model 3", year:2021, colour:"Black") { __typename } }'
+    assert _run(q, req)["data"]["saveMyVehicle"]["__typename"] == "Success"
+    driver.refresh_from_db()
+    assert driver.vehicle.make == "Tesla"

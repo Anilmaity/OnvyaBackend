@@ -221,6 +221,32 @@ class SaveMyPersonalDetails(graphene.Mutation):
         return Success(id=str(driver.id), message="personal_details_saved")
 
 
+class SaveMyVehicle(graphene.Mutation):
+    class Arguments:
+        registration = graphene.String(required=True)
+        make = graphene.String(required=True)
+        model = graphene.String(required=True)
+        year = graphene.Int()
+        colour = graphene.String()
+
+    Output = MutationResult
+
+    def mutate(self, info, registration, make, model, year=None, colour=None):
+        driver = _self_driver(info)
+        if driver is None:
+            return PermissionDenied(code="no_driver", message="No driver profile for current user")
+        from apps.vehicles.models import Vehicle
+        from apps.vehicles.services import VehicleService
+        v = Vehicle.objects.filter(driver=driver).first() or Vehicle(driver=driver)
+        v.registration = registration
+        v.make = make
+        v.model = model
+        v.year = year
+        v.colour = colour or ""
+        VehicleService().save(v)
+        return Success(id=str(v.id), message="vehicle_saved")
+
+
 class Query(graphene.ObjectType):
     applications = graphene.List(graphene.NonNull(ApplicationType), filter=ApplicationFilter(), required=True)
     application = graphene.Field(ApplicationType, id=graphene.ID(required=True))
@@ -255,3 +281,4 @@ class Mutation(graphene.ObjectType):
     request_more_info = RequestMoreInfo.Field()
     start_my_application = StartMyApplication.Field()
     save_my_personal_details = SaveMyPersonalDetails.Field()
+    save_my_vehicle = SaveMyVehicle.Field()
