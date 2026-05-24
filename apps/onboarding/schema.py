@@ -247,6 +247,26 @@ class SaveMyVehicle(graphene.Mutation):
         return Success(id=str(v.id), message="vehicle_saved")
 
 
+class SaveMyBackgroundCheck(graphene.Mutation):
+    class Arguments:
+        ni_number = graphene.String(required=True)
+        dbs_consent = graphene.Boolean(required=True)
+
+    Output = MutationResult
+
+    def mutate(self, info, ni_number, dbs_consent):
+        driver = _self_driver(info)
+        if driver is None:
+            return PermissionDenied(code="no_driver", message="No driver profile for current user")
+        if not dbs_consent:
+            return _validation("dbs_consent", "DBS consent is required to proceed")
+        driver.ni_number = ni_number
+        driver.dbs_consent = True
+        driver.dbs_consent_at = timezone.now()
+        driver.save()
+        return Success(id=str(driver.id), message="background_saved")
+
+
 class Query(graphene.ObjectType):
     applications = graphene.List(graphene.NonNull(ApplicationType), filter=ApplicationFilter(), required=True)
     application = graphene.Field(ApplicationType, id=graphene.ID(required=True))
@@ -282,3 +302,4 @@ class Mutation(graphene.ObjectType):
     start_my_application = StartMyApplication.Field()
     save_my_personal_details = SaveMyPersonalDetails.Field()
     save_my_vehicle = SaveMyVehicle.Field()
+    save_my_background_check = SaveMyBackgroundCheck.Field()

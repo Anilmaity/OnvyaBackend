@@ -59,3 +59,19 @@ def test_save_my_vehicle_upsert(driver_ctx):
     assert _run(q, req)["data"]["saveMyVehicle"]["__typename"] == "Success"
     driver.refresh_from_db()
     assert driver.vehicle.make == "Tesla"
+
+
+def test_save_my_background_check(driver_ctx):
+    a, user, driver, req = driver_ctx
+    _run("mutation { startMyApplication { __typename } }", req)
+    q = 'mutation { saveMyBackgroundCheck(niNumber:"QQ123456C", dbsConsent:true) { __typename } }'
+    assert _run(q, req)["data"]["saveMyBackgroundCheck"]["__typename"] == "Success"
+    driver.refresh_from_db()
+    assert driver.ni_number == "QQ123456C" and driver.dbs_consent is True
+
+
+def test_background_check_requires_consent(driver_ctx):
+    a, user, driver, req = driver_ctx
+    _run("mutation { startMyApplication { __typename } }", req)
+    q = 'mutation { saveMyBackgroundCheck(niNumber:"QQ123456C", dbsConsent:false) { __typename } }'
+    assert _run(q, req)["data"]["saveMyBackgroundCheck"]["__typename"] == "ValidationError"
