@@ -40,3 +40,13 @@ def test_start_my_application_no_profile_denied(db):
     r = _run("mutation { startMyApplication { __typename } }", req)
     clear_current_agency()
     assert r["data"]["startMyApplication"]["__typename"] == "PermissionDenied"
+
+
+def test_save_my_personal_details(driver_ctx):
+    a, user, driver, req = driver_ctx
+    _run("mutation { startMyApplication { __typename } }", req)
+    q = 'mutation { saveMyPersonalDetails(firstName:"Jane", lastName:"Doe", phone:"7123456789") { __typename ... on Success { message } } }'
+    r = _run(q, req)
+    assert r["data"]["saveMyPersonalDetails"]["__typename"] == "Success"
+    driver.refresh_from_db()
+    assert driver.first_name == "Jane" and driver.phone == "7123456789"

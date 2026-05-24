@@ -185,6 +185,42 @@ class StartMyApplication(graphene.Mutation):
         return Success(id=str(app.id), message="started")
 
 
+class SaveMyPersonalDetails(graphene.Mutation):
+    class Arguments:
+        first_name = graphene.String(required=True)
+        last_name = graphene.String(required=True)
+        phone = graphene.String()
+        date_of_birth = graphene.Date()
+
+    Output = MutationResult
+
+    def mutate(self, info, first_name, last_name, phone=None, date_of_birth=None):
+        driver = _self_driver(info)
+        if driver is None:
+            return PermissionDenied(code="no_driver", message="No driver profile for current user")
+        app = Application.objects.filter(driver=driver).first()
+        if app is None:
+            return _validation("application", "No application; start onboarding first")
+        driver.first_name = first_name
+        driver.last_name = last_name
+        if phone is not None:
+            driver.phone = phone
+        if date_of_birth is not None:
+            driver.date_of_birth = date_of_birth
+        driver.save()
+        step = Step.objects.filter(application=app, kind=Step.Kind.PERSONAL_DETAILS).first()
+        if step is not None:
+            step.outcome = {
+                **(step.outcome or {}),
+                "first_name": first_name, "last_name": last_name,
+                "phone": phone or "", "date_of_birth": str(date_of_birth) if date_of_birth else None,
+            }
+            step.status = Step.Status.PASSED
+            step.completed_at = timezone.now()
+            StepService().save(step)
+        return Success(id=str(driver.id), message="personal_details_saved")
+
+
 class Query(graphene.ObjectType):
     applications = graphene.List(graphene.NonNull(ApplicationType), filter=ApplicationFilter(), required=True)
     application = graphene.Field(ApplicationType, id=graphene.ID(required=True))
@@ -218,3 +254,4 @@ class Mutation(graphene.ObjectType):
     reject_application = RejectApplication.Field()
     request_more_info = RequestMoreInfo.Field()
     start_my_application = StartMyApplication.Field()
+    save_my_personal_details = SaveMyPersonalDetails.Field()
