@@ -1,12 +1,13 @@
 import graphene
 from graphene_django import DjangoObjectType
 from graphene_file_upload.scalars import Upload
+from django.utils import timezone
 
-from apps.common.graphql_types import MutationResult, Success, ValidationError, FieldError
+from apps.common.graphql_types import MutationResult, Success, ValidationError, FieldError, PermissionDenied
 from apps.common.permissions import permission_required
 from apps.drivers.models import Driver
 from apps.onboarding.models import Application, Step, ApplicationDocument
-from apps.onboarding.services import ApplicationService, IllegalTransition
+from apps.onboarding.services import ApplicationService, IllegalTransition, StepService
 from apps.onboarding.selectors import list_applications
 
 
@@ -45,6 +46,14 @@ class ApplicationFilter(graphene.InputObjectType):
 
 def _validation(field, message):
     return ValidationError(field_errors=[FieldError(field=field, message=message)])
+
+
+def _self_driver(info):
+    """Return the authenticated user's own Driver, or None."""
+    user = getattr(info.context, "user", None)
+    if not user or not getattr(user, "is_authenticated", False):
+        return None
+    return getattr(user, "driver_profile", None)
 
 
 class StartApplication(graphene.Mutation):
@@ -159,6 +168,23 @@ class RequestMoreInfo(graphene.Mutation):
         return Success(id=str(app.id), message="info_requested")
 
 
+class StartMyApplication(graphene.Mutation):
+    Output = MutationResult
+
+    def mutate(self, info):
+        driver = _self_driver(info)
+        if driver is None:
+            return PermissionDenied(code="no_driver", message="No driver profile for current user")
+        existing = Application.objects.filter(driver=driver).first()
+        if existing and existing.state != Application.State.REJECTED:
+            return Success(id=str(existing.id), message="already_started")
+        try:
+            app = ApplicationService().start(driver)
+        except IllegalTransition as e:
+            return _validation("state", str(e))
+        return Success(id=str(app.id), message="started")
+
+
 class Query(graphene.ObjectType):
     applications = graphene.List(graphene.NonNull(ApplicationType), filter=ApplicationFilter(), required=True)
     application = graphene.Field(ApplicationType, id=graphene.ID(required=True))
@@ -191,3 +217,4 @@ class Mutation(graphene.ObjectType):
     approve_application = ApproveApplication.Field()
     reject_application = RejectApplication.Field()
     request_more_info = RequestMoreInfo.Field()
+    start_my_application = StartMyApplication.Field()
