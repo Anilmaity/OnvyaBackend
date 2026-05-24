@@ -1,4 +1,5 @@
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from graphene.test import Client
 from apps.agencies.models import Agency
 from apps.common.context import set_current_agency, clear_current_agency
@@ -75,3 +76,15 @@ def test_background_check_requires_consent(driver_ctx):
     _run("mutation { startMyApplication { __typename } }", req)
     q = 'mutation { saveMyBackgroundCheck(niNumber:"QQ123456C", dbsConsent:false) { __typename } }'
     assert _run(q, req)["data"]["saveMyBackgroundCheck"]["__typename"] == "ValidationError"
+
+
+def test_driver_uploads_to_own_application(driver_ctx):
+    a, user, driver, req = driver_ctx
+    from apps.onboarding.services import ApplicationService
+    app = ApplicationService().start(driver)
+    f = SimpleUploadedFile("l.pdf", b"x", content_type="application/pdf")
+    r = Client(schema).execute(
+        'mutation($f: Upload!) { uploadApplicationDocument(applicationId: "%s", kind: "LICENCE", file: $f) { __typename } }' % app.id,
+        context=req, variables={"f": f},
+    )
+    assert r["data"]["uploadApplicationDocument"]["__typename"] == "Success"

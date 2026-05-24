@@ -82,11 +82,20 @@ class UploadApplicationDocument(graphene.Mutation):
 
     Output = MutationResult
 
-    @permission_required("applications.update")
     def mutate(self, info, application_id, kind, file):
         app = Application.objects.filter(id=application_id).first()
         if app is None:
             return _validation("application_id", "Application not found")
+        user = getattr(info.context, "user", None)
+        is_self = (
+            user is not None
+            and getattr(user, "driver_profile", None) is not None
+            and str(user.driver_profile.id) == str(app.driver_id)
+        )
+        if not is_self:
+            from apps.common.permissions import has_permission
+            if not has_permission(user, "applications.update"):
+                return PermissionDenied(code="permission_denied", message="applications.update required")
         try:
             doc = ApplicationService().upload_document(app, kind, file)
         except IllegalTransition as e:
