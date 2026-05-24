@@ -51,3 +51,31 @@ def test_create_sends_email_with_code(agency_ctx):
     msg = mail.outbox[0]
     assert msg.to == ["ab@a.test"]
     assert d.registration_code in msg.body
+
+
+def test_driver_type_exposes_code_and_registered(agency_ctx):
+    from graphene.test import Client
+    from apps.accounts.models import AgencyUser, Role, Permission, RolePermission, UserRole
+    from config.schema import schema
+
+    d = DriverService().create(first_name="A", last_name="B", email="ab@a.test")
+
+    reader = AgencyUser(agency=agency_ctx, email="reader@a.test", is_active=True)
+    reader.set_password("x")
+    reader.save()
+    role = Role.objects.create(agency=agency_ctx, name="Reader")
+    perm, _ = Permission.objects.get_or_create(code="drivers.read")
+    RolePermission.objects.create(role=role, permission=perm)
+    UserRole.objects.create(user=reader, role=role)
+
+    class Req:
+        pass
+    req = Req()
+    req.user = reader
+    req.current_agency = agency_ctx
+
+    q = f'query {{ driver(id: "{d.id}") {{ registrationCode registered }} }}'
+    result = Client(schema).execute(q, context=req)
+    assert result.get("errors") is None
+    assert result["data"]["driver"]["registrationCode"] == d.registration_code
+    assert result["data"]["driver"]["registered"] is False

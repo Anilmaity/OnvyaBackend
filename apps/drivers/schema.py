@@ -19,17 +19,22 @@ class DriverNoteType(DjangoObjectType):
 
 class DriverType(DjangoObjectType):
     notes = graphene.List(graphene.NonNull(DriverNoteType), required=True)
+    registered = graphene.Boolean(required=True)
     vehicle = graphene.Field("apps.vehicles.schema.VehicleType")
 
     class Meta:
         model = Driver
         fields = ("id", "first_name", "last_name", "email", "phone", "status",
                   "licence_type", "depot", "flex_enrolled", "joined_at",
-                  "suspension_reason", "offboard_reason", "created_at", "updated_at",
+                  "suspension_reason", "offboard_reason", "registration_code",
+                  "created_at", "updated_at",
                   "ni_number", "dbs_consent", "dbs_consent_at")
 
     def resolve_notes(self, info):
         return list(self.notes.all().order_by("-created_at"))
+
+    def resolve_registered(self, info):
+        return bool(self.user_id and self.user.is_active)
 
     def resolve_vehicle(self, info):
         try:
