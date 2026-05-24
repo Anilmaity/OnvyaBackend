@@ -156,6 +156,7 @@ CORS_ALLOW_CREDENTIALS = os.environ.get("CORS_ALLOW_CREDENTIALS", "False") == "T
 # Django 4+ requires scheme-qualified origins (e.g. https://example.com) for
 # CSRF on cross-origin POSTs and the admin login over HTTPS.
 CSRF_TRUSTED_ORIGINS = [o for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@onvya.local")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "memory://")
 CELERY_TASK_ALWAYS_EAGER = True

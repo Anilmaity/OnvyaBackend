@@ -37,6 +37,7 @@ class Driver(AgencyScopedModel):
     joined_at = models.DateTimeField(null=True, blank=True)
     suspension_reason = models.TextField(blank=True, default="")
     offboard_reason = models.TextField(blank=True, default="")
+    registration_code = models.CharField(max_length=6, blank=True, default="")
 
     class Meta(AgencyScopedModel.Meta):
         constraints = [
